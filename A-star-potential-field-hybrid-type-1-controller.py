@@ -14,7 +14,7 @@ import copy
 import glob
 import math
 import time
-import Queue as Q
+import queue as Q
 
 
 def printx(x):
@@ -32,8 +32,8 @@ class pixel1(object):
         self.parent = parent
         self.h = h #heuristic
 
-    def __cmp__(self, other): # comparable which will return self.penalty<other.penalty
-        return cmp(self.penalty+self.h, other.penalty+other.h)
+    def __lt__(self, other): # comparable which will return self.penalty<other.penalty
+        return (self.penalty + self.h) < (other.penalty + other.h)
 
 def feasibility(nx, ny, img):  # function to check if pixel lies in obstacle
     if img[nx, ny, 0] == 255:
@@ -84,7 +84,7 @@ def bfs(arr, sx, sy, dx, dy, final_contours): # sx, sy :- source coordinates  dx
     q.put(pixel1(0, sx, sy, None, heuristic(sx, sy, dx, dy)))
     dist[sx][sy] = 0
     distplusHeuristic[sx][sy] = dist[sx][sy]+heuristic(sx, sy, dx, dy)
-    s = time.clock()
+    s = time.perf_counter()
     cnt = 0
     cntq = 0
     while not q.empty():
@@ -100,7 +100,7 @@ def bfs(arr, sx, sy, dx, dy, final_contours): # sx, sy :- source coordinates  dx
             while p is not None:
                 solution.append([p.pointx, p.pointy])
                 p = p.parent
-            #print 'time : ', time.clock()-s
+            #print 'time : ', time.perf_counter()-s
             #print cnt, cntq
             return solution
 
@@ -110,7 +110,7 @@ def bfs(arr, sx, sy, dx, dy, final_contours): # sx, sy :- source coordinates  dx
             if check_boundaries1(ex, ey, nx, ny) == True:
                 #if arr.item(nx, ny, 0) == 0 and arr.item(nx, ny, 1) == 0 and arr.item(nx, ny, 2) == 0:
                     pen = dist[x][y]
-                    pen_new = cost(x, y, nx, ny, pen, arr[nx][ny][0])
+                    pen_new = cost(x, y, nx, ny, pen, int(arr[nx][ny][0]))
                     h_new = heuristic(nx, ny, dx, dy)
                     if dist[nx][ny] > pen_new :
                         dist[nx][ny]  = pen_new
@@ -120,7 +120,7 @@ def bfs(arr, sx, sy, dx, dy, final_contours): # sx, sy :- source coordinates  dx
                         distplusHeuristic[nx][ny] = dist[nx][ny] + h_new
                         cntq = cntq+1
                         q.put(pixel1(pen_new, nx, ny, p, h_new))
-    #print 'time : ', time.clock()-s
+    #print 'time : ', time.perf_counter()-s
     return []
 
 '''
@@ -139,8 +139,8 @@ class pixel(object):
         self.pointx = int(pointx)
         self.pointy = int(pointy)
 
-    def __cmp__(self, other): # comparable which will return self.penalty<other.penalty
-        return cmp(self.penalty, other.penalty)
+    def __lt__(self, other): # comparable which will return self.penalty<other.penalty
+        return self.penalty < other.penalty
 
 images = glob.glob('*.jpg')
 
@@ -190,7 +190,7 @@ end
 '''
 
 def check_obstacles(arr, ansx, ansy):  #function to check whether a given point is on obstacle or not
-    if arr[ansx][ansy][0] == 255:
+    if arr[int(ansx)][int(ansy)][0] == 255:
         return True
     else:
         return False
@@ -338,9 +338,9 @@ def path_planning(arr, sx1, sy1, dx, dy, theta):
         theta1 = math.atan2(tx, ty)
 
         if arr[sx][sy][0] == 255:
-            print gx, gy, fx, fy
-            print 'tx ', tx, ' ty ', ty, 'sx ', sx, ' sy ', sy
-            print theta1*180/math.pi, theta*180/math.pi
+            print(gx, gy, fx, fy)
+            print('tx ', tx, ' ty ', ty, 'sx ', sx, ' sy ', sy)
+            print(theta1*180/math.pi, theta*180/math.pi)
             sleep(10)
 
         P = v
@@ -365,7 +365,7 @@ def path_planning(arr, sx1, sy1, dx, dy, theta):
         sy = int(sy)
 
         if not check_boundaries(x, y, sx, sy):
-            print 'out of boundaries' , sx, sy
+            print('out of boundaries' , sx, sy)
             return sol
 
         sol.append((sx, sy))
@@ -377,7 +377,7 @@ def path_planning(arr, sx1, sy1, dx, dy, theta):
 
 def final_path(sol, arr):
     l = len(sol)
-    print l
+    print(l)
     div = 150
 
     start = 0
@@ -386,7 +386,7 @@ def final_path(sol, arr):
     theta = 0
 
     while start < l-1:
-        print sol[start][0], sol[start][1], sol[end][0], sol[end][1]
+        print(sol[start][0], sol[start][1], sol[end][0], sol[end][1])
         ret = path_planning(arr, sol[start][0], sol[start][1], sol[end][0], sol[end][1], theta)
         for i in ret:
             solution.append(i)
@@ -406,7 +406,7 @@ def final_path(sol, arr):
 
 def show_image(im):
     cv2.imshow('image', im)
-    k = cv2.waitKey(0)
+    k = cv2.waitKey(1)
 
 def find_goal(frame):
     # converting to HSV
@@ -434,7 +434,8 @@ def find_goal(frame):
 
     perimeter = 0
     j = 0
-    image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    _res = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    contours = _res[0] if len(_res) == 2 else _res[1]
     # print len(contours)
     # if(len(contours) > 5):
     #    continue
@@ -463,7 +464,7 @@ def find_goal(frame):
     cv2.circle(frame, (x, y), 5, (255, 0, 255), -1)
 
     #cv2.imshow('image', frame)
-    #k = cv2.waitKey(0)
+    #k = cv2.waitKey(1)
 
     return (int(x), int(y))
 
@@ -481,7 +482,8 @@ def find_robot(im):
     th4 = copy.copy(th3)
     perimeter = 0
     j = 0
-    image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    _res = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    contours = _res[0] if len(_res) == 2 else _res[1]
     cnt = np.array([])
     for i in range(len(contours)):
         if (perimeter < cv2.contourArea(contours[i])):
@@ -517,9 +519,10 @@ def classify(img):
     x, y = thresh1.shape
     arr = np.zeros((x, y, 3), np.uint8)
     final_contours = []
-    image, contours, hierarchy = cv2.findContours(t2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    _res = cv2.findContours(t2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours = _res[0] if len(_res) == 2 else _res[1]
     #cv2.imshow('image', image)
-    #k = cv2.waitKey(0)
+    #k = cv2.waitKey(1)
     for i in range(len(contours)):
         cnt = contours[i]
         if cv2.contourArea(cnt) > 3000 and cv2.contourArea(cnt) < 25000:
@@ -527,7 +530,7 @@ def classify(img):
             cv2.fillConvexPoly(arr, cnt, [255, 255, 255])
             final_contours.append(cnt)
     #cv2.imshow('arr', arr)
-    #k = cv2.waitKey(0)
+    #k = cv2.waitKey(1)
     return final_contours,arr
 
 def negate(arr):
@@ -552,18 +555,18 @@ def main():
     for im in images:
 
         img = cv2.imread(im)
-        start1 = time.clock()
+        start1 = time.perf_counter()
         x, y, z = img.shape
         final_contours,arr = classify(img)
         cmax = 50
         #cv2.imshow('arr', arr)
-        #k = cv2.waitKey(0)
+        #k = cv2.waitKey(1)
         arr1 = copy.copy(arr)
         min_cost = fill_clearance(arr,cmax, final_contours)
-        #print 'time: ',  time.clock()-start
+        #print 'time: ',  time.perf_counter()-start
 
-        for i in xrange(x):
-            for j in xrange(y):
+        for i in range(x):
+            for j in range(y):
                 pix_val = int(5*min_cost[i][j])
                 if(min_cost[i][j] > 10000):
                     pix_val = 255
@@ -571,31 +574,31 @@ def main():
         for cnt in final_contours:
             cv2.fillConvexPoly(arr, cnt, [0, 0, 0])
         #cv2.imshow('arr', arr)
-        #k = cv2.waitKey(0)
+        #k = cv2.waitKey(1)
 
         '''
         Code from A-star.py
         '''
-        sx = 20 # raw_input("Enter source and destination Coordinates")
-        sy = 20  # raw_input()
-        dx = 500   # raw_input()
-        dy = 1000  # raw_input()
+        sx = 20 # input("Enter source and destination Coordinates")
+        sy = 20  # input()
+        dx = 500   # input()
+        dy = 1000  # input()
 
-        print 'time : ', time.clock() - start1
+        print('time : ', time.perf_counter() - start1)
 
         sol = bfs(arr, sx, sy, dx, dy, final_contours)
         for i in range(len(sol)):
             start = (sol[i][1], sol[i][0])
             cv2.circle(arr, start, 1, [255, 0, 0])
             cv2.circle(img, start, 1, [255, 0, 0])
-        print 'time : ', time.clock()-start1
+        print('time : ', time.perf_counter()-start1)
         cv2.imshow('img', img)
-        k = cv2.waitKey(0)
+        k = cv2.waitKey(1)
 
         solution = final_path(sol, arr1)
 
         if len(solution) == 0:
-            print 'No solution from source to destination'
+            print('No solution from source to destination')
         else:
             for i in range(len(solution)):
                 start = (solution[i][1], solution[i][0])
@@ -611,12 +614,12 @@ def main():
         cv2.circle(arr, (dy, dx), 2, [0, 255, 0])
         cv2.circle(img, (sy, sx), 2, [0, 255, 0])
         cv2.circle(img, (dy, dx), 2, [0, 255, 0])
-        output = "output1/"+`counter`
+        output = "output1/"+str(counter)
         output += ".jpg"
         cv2.imwrite(output, img)
         counter += 1
         cv2.imshow('image', img)
         cv2.imshow('arr', arr)
-        cv2.waitKey(0)
+        cv2.waitKey(1)
         cv2.destroyAllWindows()
 main()

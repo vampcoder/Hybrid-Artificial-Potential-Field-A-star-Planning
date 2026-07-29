@@ -15,7 +15,7 @@ import copy
 import glob
 import math
 import time
-import Queue as Q
+import queue as Q
 
 def printx(x):
     #print x
@@ -32,8 +32,8 @@ class pixel1(object):
         self.parent = parent
         self.h = h #heuristic
 
-    def __cmp__(self, other): # comparable which will return self.penalty<other.penalty
-        return cmp(self.penalty+self.h, other.penalty+other.h)
+    def __lt__(self, other): # comparable which will return self.penalty<other.penalty
+        return (self.penalty + self.h) < (other.penalty + other.h)
 
 def feasibility(nx, ny, img):  # function to check if pixel lies in obstacle
     if img[nx, ny, 0] == 255:
@@ -102,7 +102,7 @@ def bfs(arr, sx, sy, dx, dy, final_contours): # sx, sy :- source coordinates  dx
     q.put(pixel1(0, sx, sy, None, heuristic(sx, sy, dx, dy)))
     dist[sx][sy] = 0
     distplusHeuristic[sx][sy] = dist[sx][sy]+heuristic(sx, sy, dx, dy)
-    s = time.clock()
+    s = time.perf_counter()
     cnt = 0
     cntq = 0
     count  = 0
@@ -120,8 +120,8 @@ def bfs(arr, sx, sy, dx, dy, final_contours): # sx, sy :- source coordinates  dx
             while p is not None:
                 solution.append([p.pointx, p.pointy])
                 p = p.parent
-            print 'time : ', time.clock()-s
-            print cnt, cntq
+            print('time : ', time.perf_counter()-s)
+            print(cnt, cntq)
             return solution
 
         for i in range(len(actions)):
@@ -130,7 +130,7 @@ def bfs(arr, sx, sy, dx, dy, final_contours): # sx, sy :- source coordinates  dx
             if check_boundaries(ex, ey, nx, ny) == True:
                 #if arr.item(nx, ny, 0) == 0 and arr.item(nx, ny, 1) == 0 and arr.item(nx, ny, 2) == 0:
                     pen = dist[x][y]
-                    pen_new = cost(x, y, nx, ny, pen, 255-arr[nx][ny][0])
+                    pen_new = cost(x, y, nx, ny, pen, int(255) - int(arr[nx][ny][0]))
                     h_new = heuristic(nx, ny, dx, dy)
                     if dist[nx][ny] > pen_new :
                         dist[nx][ny]  = pen_new
@@ -140,7 +140,7 @@ def bfs(arr, sx, sy, dx, dy, final_contours): # sx, sy :- source coordinates  dx
                         distplusHeuristic[nx][ny] = dist[nx][ny] + h_new
                         cntq = cntq+1
                         q.put(pixel1(pen_new, nx, ny, p, h_new))
-    print 'time : ', time.clock()-s
+    print('time : ', time.perf_counter()-s)
     return []
 
 '''
@@ -159,8 +159,8 @@ class pixel(object):
         self.pointx = int(pointx)
         self.pointy = int(pointy)
 
-    def __cmp__(self, other): # comparable which will return self.penalty<other.penalty
-        return cmp(self.penalty, other.penalty)
+    def __lt__(self, other): # comparable which will return self.penalty<other.penalty
+        return self.penalty < other.penalty
 
 images = glob.glob('*.jpg')
 
@@ -210,7 +210,7 @@ function definition from Clearance-feasibility
 end
 '''
 def check_obstacles(arr, ansx, ansy):  #function to check whether a given point is on obstacle or not
-    if arr[ansx][ansy][0] == 255:
+    if arr[int(ansx)][int(ansy)][0] == 255:
         return True
     else:
         return False
@@ -301,7 +301,7 @@ def path_planning(arr, sx1, sy1, dx, dy, theta, sd):
     ex, ey, ez = arr.shape
     arr1 = np.zeros((ex, ey))
     #cv2.imshow('img', arr)
-    #k = cv2.waitKey(0)
+    #k = cv2.waitKey(1)
     #print 'abc'
     '''
 
@@ -329,8 +329,8 @@ def path_planning(arr, sx1, sy1, dx, dy, theta, sd):
     #print 'xyz'
 
     if arr[sx1][sy1][0] == 255 or arr[dx][dy][0] == 255:
-        print arr[sx1][sy1], sx1, sy1
-        print arr[dx][dy], dx, dy
+        print(arr[sx1][sy1], sx1, sy1)
+        print(arr[dx][dy], dx, dy)
         return []
     sx = sx1
     sy = sy1
@@ -371,9 +371,9 @@ def path_planning(arr, sx1, sy1, dx, dy, theta, sd):
         #print 'tx' ,tx, 'ty' ,ty
             #sleep(1)
         if arr[sx][sy][0] == 255:
-            print gx, gy, fx, fy
-            print 'tx ', tx, ' ty ', ty, 'sx ', sx, ' sy ', sy
-            print theta1*180/math.pi, theta*180/math.pi
+            print(gx, gy, fx, fy)
+            print('tx ', tx, ' ty ', ty, 'sx ', sx, ' sy ', sy)
+            print(theta1*180/math.pi, theta*180/math.pi)
 
 
         P = v
@@ -398,12 +398,12 @@ def path_planning(arr, sx1, sy1, dx, dy, theta, sd):
         sy = int(sy)
 
         if not check_boundaries(x, y, sx, sy):
-            print 'out of boundaries' , sx, sy
+            print('out of boundaries' , sx, sy)
             return sol
 
         sol.append((sx, sy))
         if sx < dx+ 2 and sx > dx - 2 and sy < dy+2 and sy > dy-2:
-            print 'abc'
+            print('abc')
             break
 
         nd = nearestObstacle(sx, sy, arr)
@@ -411,7 +411,7 @@ def path_planning(arr, sx1, sy1, dx, dy, theta, sd):
         #print 'nd ',nd, sx, sy
         #sleep(0.5)
         if nd > sd:
-            print 'nd ',nd, sx, sy
+            print('nd ',nd, sx, sy)
             break
 
     #sleep(10)
@@ -420,8 +420,8 @@ def path_planning(arr, sx1, sy1, dx, dy, theta, sd):
 def print_path_to_file(sol):
     with open('path.txt', 'w') as f:
         for i in range(len(sol)):
-            f.write(`sol[i][0]` + ' ' + `sol[i][1]` + '\n')
-            print sol[i][0]
+            f.write(str(sol[i][0]) + ' ' + str(sol[i][1]) + '\n')
+            print(sol[i][0])
 
 def read_path_from_file():
     sol = []
@@ -462,7 +462,7 @@ def make_path(sx, sy, dx, dy, arr1):
     return sol
 
 def final_path(sx, sy, dx, dy, arr, sol):
-    print 'len ', len(sol)
+    print('len ', len(sol))
     switch_d = 70
     solution = []
     delta = 5
@@ -478,11 +478,11 @@ def final_path(sx, sy, dx, dy, arr, sol):
         if sx < dx + 2 and sx > dx - 2 and sy < dy + 2 and sy > dy - 2:
             break
         nd = nearestObstacle(sx, sy, arr)
-        print "nd : ", nd
+        print("nd : ", nd)
         if nd < switch_d:
             #print 'nd ', nd
             sol1 = path_planning(arr, sx, sy, dx, dy,theta, switch_d)
-            print 'sol returned'
+            print('sol returned')
             for k in sol1:
                 solution.append(k)
             sx1 = sol1[-1][0]
@@ -519,7 +519,7 @@ def final_path(sx, sy, dx, dy, arr, sol):
 
             d1 = max(d1, 0)
             if d1 > len(sol)-1 or d1 < 0:
-                print 'd1 : ' , d1, x1, y1
+                print('d1 : ' , d1, x1, y1)
 
             (x1, y1) = sol[d1]
 
@@ -572,7 +572,8 @@ def main():
         arr = np.zeros((x, y, 3), np.uint8)
         arr1 = np.zeros((x, y, 3), np.uint8)
         final_contours= []
-        image, contours, hierarchy = cv2.findContours(t2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        _res = cv2.findContours(t2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        contours = _res[0] if len(_res) == 2 else _res[1]
         for i in range(len(contours)):
             cnt = contours[i]
             if cv2.contourArea(cnt) > 1000 and cv2.contourArea(cnt) < 15000 :
@@ -581,12 +582,12 @@ def main():
                 cv2.fillConvexPoly(arr1, cnt, [255, 255, 255])
                 final_contours.append(cnt)
         cmax = 50
-        start = time.clock()
+        start = time.perf_counter()
         min_cost = fill_clearance(arr,cmax, final_contours)
-        print 'time: ',  time.clock()-start
+        print('time: ',  time.perf_counter()-start)
 
-        for i in xrange(x):
-            for j in xrange(y):
+        for i in range(x):
+            for j in range(y):
                 pix_val = int(255-5*min_cost[i][j])
                 if(min_cost[i][j] > 10000):
                     pix_val = 0
@@ -597,10 +598,10 @@ def main():
         '''
         Code from A-star.py
         '''
-        sx = 60 # raw_input("Enter source and destination Coordinates")
-        sy = 60  # raw_input()
-        dx = 480   # raw_input()
-        dy = 900 # raw_input()
+        sx = 60 # input("Enter source and destination Coordinates")
+        sy = 60  # input()
+        dx = 480   # input()
+        dy = 900 # input()
 
         sol = bfs(arr, sx, sy, dx, dy, final_contours)
         #sol = read_path_from_file()
@@ -619,7 +620,7 @@ def main():
 
 
         if len(solution) == 0:
-            print 'No solution from source to destination'
+            print('No solution from source to destination')
         else:
             for i in range(len(solution)):
                 start = (solution[i][1], solution[i][0])
@@ -632,7 +633,7 @@ def main():
         cv2.circle(img, (sy, sx), 2, [0, 255, 0])
         cv2.circle(img, (dy, dx), 2, [0, 255, 0])
 
-        output = "output2/"+`counter`
+        output = "output2/"+str(counter)
         output += ".jpg"
         cv2.imwrite(output, img)
         counter += 1
@@ -640,7 +641,7 @@ def main():
         cv2.imshow('image', img)
         cv2.imshow('arr', arr)
         cv2.imshow('arr1', arr1)
-        cv2.waitKey(0)
+        cv2.waitKey(1)
         cv2.destroyAllWindows()
 
 main()
